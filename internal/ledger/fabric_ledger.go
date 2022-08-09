@@ -12,44 +12,29 @@ import (
 )
 
 const (
-	channelName      = "mychannel"
-	contractType     = "basic"
-	walletPath       = "wallet"
-	walletLabel      = "appUser"
-	org1MSPid        = "Org1MSP"
-	createTXFuncName = "CreateTX"
-	findTXFuncName   = "ReadTX"
-	getAllTXFuncName = "GetAllTXs"
+	configProviderName = "connection-config.yaml"
+	channelName        = "mychannel"
+	contractType       = "basic"
+	walletPath         = "wallet"
+	walletLabel        = "appUser"
+	org1MSPid          = "Org1MSP"
+	createTXFuncName   = "CreateTX"
+	findTXFuncName     = "ReadTX"
+	getAllTXFuncName   = "GetAllTXs"
 )
 
 var (
-	orgConfigPath = filepath.Join(
-		"..",
-		"..",
-		"test-network",
-		"organizations",
-		"peerOrganizations",
-	)
-	org1CCPPath = filepath.Join(
-		orgConfigPath,
-		"org1.example.com",
-		"connection-org1.yaml",
-	)
-	org1CREDPath = filepath.Join(
-		orgConfigPath,
-		"org1.example.com",
-		"users",
-		"User1@org1.example.com",
-		"msp",
-	)
-	org1CertPath = filepath.Join(org1CREDPath, "signcerts", "cert.pem")
-	org1KeyDir   = filepath.Join(org1CREDPath, "keystore")
+	//configPath = filepath.Join(
+	//	"admin-msp",
+	//)
+	configPath   = "/Users/tommytian/codebase/admin-msp"
+	org1CertPath = filepath.Join(configPath, "signcerts", "cert.pem")
+	org1KeyDir   = filepath.Join(configPath, "keystore")
 )
 
 func init() {
-	log.Println("PWD: ", os.Getenv("PWD"))
 	log.Println("============ application-golang starts ============")
-	err := os.Setenv("DISCOVERY_AS_LOCALHOST", "true")
+	err := os.Setenv("DISCOVERY_AS_LOCALHOST", "false")
 	if err != nil {
 		log.Fatalf("Error setting DISCOVERY_AS_LOCALHOST environment variable: %v", err)
 	}
@@ -78,7 +63,7 @@ func NewController() *Controller {
 		}
 	}
 	gw, err := gateway.Connect(
-		gateway.WithConfig(config.FromFile(filepath.Clean(org1CCPPath))),
+		gateway.WithConfig(config.FromFile(filepath.Clean(configProviderName))),
 		gateway.WithIdentity(wallet, walletLabel),
 	)
 	if err != nil {
@@ -143,12 +128,14 @@ func populateWallet(wallet *gateway.Wallet) error {
 	}
 
 	// there's a single file in this dir containing the private key
+	fmt.Println(org1KeyDir)
 	files, err := os.ReadDir(org1KeyDir)
 	if err != nil {
 		return err
 	}
-	if len(files) != 1 {
-		return fmt.Errorf("keystore folder should have contain one file")
+	if len(files) == 0 {
+		//return fmt.Errorf("keystore folder should have contain one file")
+		return fmt.Errorf("no file in keystore folder")
 	}
 	keyPath := filepath.Join(org1KeyDir, files[0].Name())
 	key, err := os.ReadFile(filepath.Clean(keyPath))
